@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentasi Proses Penanganan Tiket Shell</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #263449;
+            --shell-yellow: #fbce07;
+            --shell-red: #dd1d21;
+            --accent-blue: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-subtle: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid var(--border-subtle);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--shell-yellow), var(--shell-red));
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        .slide-indicator {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Slide Container */
+        .slides-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 36px 60px 80px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(40px);
+            pointer-events: none;
+            transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .slide.prev {
+            opacity: 0;
+            transform: translateX(-40px);
+        }
+
+        .slide-inner {
+            max-width: 1240px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Typography */
+        .eyebrow {
+            display: inline-block;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--shell-yellow);
+            margin-bottom: 10px;
+            background: rgba(251, 206, 7, 0.12);
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(251, 206, 7, 0.25);
+        }
+
+        h1 {
+            font-size: 3.1rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2.15rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 820px;
+            margin-bottom: 32px;
+        }
+
+        /* Hero / Cover Slide */
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .hero-highlights {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 28px;
+        }
+
+        .mini-stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            padding: 18px;
+            border-radius: 14px;
+        }
+
+        .mini-stat .num {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--shell-yellow);
+            margin-bottom: 4px;
+        }
+
+        .mini-stat .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .hero-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(251, 206, 7, 0.25);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .hero-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .agenda-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .agenda-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            line-height: 1.45;
+            background: rgba(255,255,255,0.03);
+            padding: 12px 14px;
+            border-radius: 10px;
+        }
+
+        .agenda-num {
+            background: var(--shell-yellow);
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.78rem;
+            min-width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+        }
+
+        /* Comparison Cards (Slide 2) */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+
+        .cat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+        }
+
+        .cat-card.non-digital::before {
+            background: linear-gradient(90deg, var(--shell-yellow), #f59e0b);
+        }
+
+        .cat-card.digital::before {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+        }
+
+        .cat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cat-tag {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 999px;
+        }
+
+        .non-digital .cat-tag {
+            background: rgba(251, 206, 7, 0.15);
+            color: var(--shell-yellow);
+        }
+
+        .digital .cat-tag {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .entity-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            padding: 14px 18px;
+            border-radius: 12px;
+        }
+
+        .entity-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .entity-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .detail-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+        }
+
+        .bullet-icon {
+            color: var(--shell-yellow);
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .digital .bullet-icon {
+            color: var(--accent-blue);
+        }
+
+        /* Horizontal Pipeline Flow (Slide 3 & Slide 4) */
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .flow-track-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .step-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px 16px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 206, 7, 0.45);
+        }
+
+        .step-num {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(251, 206, 7, 0.15);
+            color: var(--shell-yellow);
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-card.blue-theme .step-num {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .step-card.blue-theme:hover {
+            border-color: rgba(56, 189, 248, 0.45);
+        }
+
+        .step-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .step-desc {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .callout-banner {
+            background: rgba(30, 41, 59, 0.85);
+            border-left: 4px solid var(--shell-yellow);
+            border-radius: 12px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .callout-banner.blue {
+            border-left-color: var(--accent-blue);
+        }
+
+        .callout-icon {
+            font-size: 1.6rem;
+        }
+
+        .callout-text h4 {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .callout-text p {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+
+        /* Sub-flow / Escalation detail in Slide 4 */
+        .sub-process-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .sub-box {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+
+        .sub-box h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sub-box p {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            line-height: 1.55;
+        }
+
+        /* Monitoring Slide (Slide 5) */
+        .monitoring-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .mon-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mon-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mon-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .mon-icon.user {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+        }
+
+        .mon-icon.cs {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .channel-pill-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .channel-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .channel-box strong {
+            display: block;
+            font-size: 0.88rem;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .channel-box span {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            display: block;
+        }
+
+        .sla-alert {
+            background: rgba(221, 29, 33, 0.12);
+            border: 1px solid rgba(221, 29, 33, 0.35);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .sla-alert strong {
+            color: #fca5a5;
+            font-size: 0.88rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .sla-alert p {
+            font-size: 0.83rem;
+            color: #fecaca;
+            line-height: 1.45;
+        }
+
+        /* Summary Matrix (Slide 6) */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .summary-table th, .summary-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .summary-table th {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--shell-yellow);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.06em;
+        }
+
+        .summary-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .summary-table td:first-child {
+            font-weight: 700;
+            color: #fff;
+            width: 22%;
+        }
+
+        /* Bottom Controls */
+        .controls-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 20;
+        }
+
+        .progress-track {
+            flex: 1;
+            max-width: 420px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            overflow: hidden;
+            margin: 0 24px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--shell-yellow), var(--shell-red));
+            width: 16.66%;
+            transition: width 0.35s ease;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        button.nav-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button.nav-btn:hover:not(:disabled) {
+            background: var(--shell-yellow);
+            color: #0f172a;
+            border-color: var(--shell-yellow);
+        }
+
+        button.nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .key-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 1024px) {
+            .hero-grid, .compare-grid, .monitoring-layout, .sub-process-grid {
+                grid-template-columns: 1fr;
+            }
+            .flow-track {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .flow-track-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .slide {
+                padding: 24px 28px 84px 28px;
+            }
+            h1 { font-size: 2.2rem; }
+            h2 { font-size: 1.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Header -->
+    <header class="top-bar">
+        <div class="brand">
+            <span class="brand-badge">S</span>
+            <span>Shell Ticket Handling &amp; Monitoring Process</span>
+        </div>
+        <div class="slide-indicator" id="slideCounter">Slide 1 dari 6</div>
+    </header>
+
+    <!-- Slides Container -->
+    <main class="slides-wrapper">
+
+        <!-- SLIDE 1: Cover & Konteks Data -->
+        <section class="slide active" data-index="0">
+            <div class="slide-inner">
+                <div class="hero-grid">
+                    <div>
+                        <span class="eyebrow">Analisis Data Tiket Shell &bull; Periode 3 Bulan Terakhir</span>
+                        <h1>Alur Penanganan Kasus &amp; Proses Monitoring Tiket Shell</h1>
+                        <p class="subtitle">
+                            Pemetaan menyeluruh alur kerja Customer Service (CS) dan Tim Teknis/IT dalam menangani tiket masuk dari jalur <strong>Non-Digital</strong> maupun <strong>Digital &amp; Yehan</strong> hingga penyelesaian (Closed).
+                        </p>
+                        <div class="hero-highlights">
+                            <div class="mini-stat">
+                                <div class="num">3 Bulan</div>
+                                <div class="label">Periode penarikan data tiket Shell (sumber: Aries)</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="num">2 Jalur</div>
+                                <div class="label">Segmentasi kasus Non-Digital vs. Digital &amp; Yehan</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="num">End-to-End</div>
+                                <div class="label">Pemahaman proses dari intake, eskalasi, hingga monitoring</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero-card">
+                        <h3>&#128203; Pokok Bahasan Presentasi</h3>
+                        <ul class="agenda-list">
+                            <li>
+                                <span class="agenda-num">01</span>
+                                <div><strong>Klasifikasi Kategori Tiket:</strong> Pemisahan entitas <em>Distributor SHELL Indonesia</em> (Non-Digital) dan <em>Shell Indonesia PT</em> (Digital &amp; Yehan).</div>
+                            </li>
+                            <li>
+                                <span class="agenda-num">02</span>
+                                <div><strong>Alur Proses Non-Digital:</strong> Penanganan operasional oleh tim CS dari tiket masuk hingga notifikasi penutupan otomatis.</div>
+                            </li>
+                            <li>
+                                <span class="agenda-num">03</span>
+                                <div><strong>Alur Proses Digital &amp; Yehan:</strong> Tahapan 4 fase mulai dari Intake Email, Validasi, Eksekusi L1/IT &amp; Backend, hingga Closed.</div>
+                            </li>
+                            <li>
+                                <span class="agenda-num">04</span>
+                                <div><strong>Mekanisme Monitoring &amp; SLA:</strong> Pemantauan status di Zoho Ticketing (CS), Portal/Email (User), dan aturan auto-close 2x24 jam.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: Kategorisasi Data Tiket -->
+        <section class="slide" data-index="1">
+            <div class="slide-inner">
+                <span class="eyebrow">Kategorisasi Data Tiket</span>
+                <h2>Pembagian Dua Kategori Utama Kasus Shell</h2>
+                <p class="subtitle">
+                    Berdasarkan identifikasi nama entitas/akun pada data tiket 3 bulan terakhir, seluruh kasus dan permintaan dikelompokkan ke dalam dua jalur penanganan berbeda.
+                </p>
+
+                <div class="compare-grid">
+                    <!-- Non-Digital -->
+                    <div class="cat-card non-digital">
+                        <div class="cat-header">
+                            <h3 style="font-size: 1.35rem;">1. Jalur Non-Digital</h3>
+                            <span class="cat-tag">Fokus Operasional &amp; L1 CS</span>
+                        </div>
+                        <div class="entity-box">
+                            <div class="entity-label">Identitas Data pada Tiket</div>
+                            <div class="entity-name">&ldquo;Distributor SHELL Indonesia&rdquo;</div>
+                        </div>
+                        <ul class="detail-list">
+                            <li>
+                                <span class="bullet-icon">&#10004;</span>
+                                <div><strong>Karakteristik Kendala:</strong> Berkaitan dengan operasional sistem yang saat ini sudah berjalan normal maupun kendala umum dari sisi pengguna (<em>user error</em>).</div>
+                            </li>
+                            <li>
+                                <span class="bullet-icon">&#10004;</span>
+                                <div><strong>PIC Utama Penyelesaian:</strong> Normalnya ditangani dan diselesaikan langsung oleh tim <strong>Customer Service (CS)</strong> bersama koordinasi internal CPN bila diperlukan.</div>
+                            </li>
+                            <li>
+                                <span class="bullet-icon">&#10004;</span>
+                                <div><strong>Sifat Penanganan:</strong> Standar operasional, edukasi/panduan penggunaan sistem, serta pengecekan alur bisnis rutin.</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Digital & Yehan -->
+                    <div class="cat-card digital">
+                        <div class="cat-header">
+                            <h3 style="font-size: 1.35rem;">2. Jalur Digital &amp; Yehan</h3>
+                            <span class="cat-tag">Kolaborasi CS &amp; Teknis/IT</span>
+                        </div>
+                        <div class="entity-box">
+                            <div class="entity-label">Identitas Data pada Tiket</div>
+                            <div class="entity-name">&ldquo;Shell Indonesia PT&rdquo;</div>
+                        </div>
+                        <ul class="detail-list">
+                            <li>
+                                <span class="bullet-icon">&#10004;</span>
+                                <div><strong>Karakteristik Kendala:</strong> Sering kali diakibatkan oleh temuan <em>bug</em> atau anomali teknis pada sistem digital yang sedang berjalan.</div>
+                            </li>
+                            <li>
+                                <span class="bullet-icon">&#10004;</span>
+                                <div><strong>PIC Utama Penyelesaian:</strong> Sebagian dapat diselesaikan oleh CS (L1), namun beberapa poin membutuhkan keterlibatan <strong>Tim Teknis / IT &amp; Backend</strong> untuk perbaikan akar masalah.</div>
+                            </li>
+                            <li>
+                                <span class="bullet-icon">&#10004;</span>
+                                <div><strong>Sifat Penanganan:</strong> Validasi kasus, investigasi teknis, perbaikan sistem/data di backend, dan konfirmasi hasil perbaikan.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: Flow Proses Non-Digital -->
+        <section class="slide" data-index="2">
+            <div class="slide-inner">
+                <span class="eyebrow">Alur Proses 01 &bull; Jalur Non-Digital</span>
+                <h2>Flow Penanganan Kasus Non-Digital (Masuk &rarr; Selesai)</h2>
+                <p class="subtitle">
+                    Alur end-to-end penanganan tiket dari <strong>Distributor SHELL Indonesia</strong> yang berfokus pada kecepatan distribusi antrean CS dan transparansi SLA kepada customer.
+                </p>
+
+                <div class="flow-track">
+                    <div class="step-card">
+                        <div class="step-num">1</div>
+                        <div class="step-title">Tiket Masuk ke CS</div>
+                        <div class="step-desc">Laporan kendala atau permintaan dari pihak distributor masuk ke sistem ticketing CS.</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">2</div>
+                        <div class="step-title">Auto-Assign Agen CS</div>
+                        <div class="step-desc">Sistem otomatis menetapkan agen CS berdasarkan durasi terlama agen berstatus <em>Available / Online</em>.</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">3</div>
+                        <div class="step-title">Penentuan Level Case</div>
+                        <div class="step-desc">CS melakukan asesmen awal untuk menentukan tingkat prioritas / level urgensi kasus tersebut.</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">4</div>
+                        <div class="step-title">Update SLA ke Customer</div>
+                        <div class="step-desc">Customer menerima informasi mengenai level kasus serta estimasi durasi terlama pengerjaan.</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">5</div>
+                        <div class="step-title">Pengecekan CS &amp; CPN</div>
+                        <div class="step-desc">CS melakukan pengecekan &amp; penyelesaian (termasuk koordinasi dengan tim internal CPN bila dibutuhkan).</div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">6</div>
+                        <div class="step-title">Close &amp; Auto-Notif</div>
+                        <div class="step-desc">CS menutup tiket (<em>Closed</em>) dan sistem otomatis mengirim notifikasi ke customer bahwa kendala selesai.</div>
+                    </div>
+                </div>
+
+                <div class="callout-banner">
+                    <div class="callout-icon">&#128161;</div>
+                    <div class="callout-text">
+                        <h4>Catatan Operasional Jalur Non-Digital</h4>
+                        <p>Karena mayoritas kasus Non-Digital bersumber dari penggunaan sistem yang sudah berjalan maupun <em>user error</em>, penyelesaian umumnya tuntas di level CS tanpa memerlukan intervensi perbaikan kode/bug dari tim IT.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: Flow Proses Digital & Yehan -->
+        <section class="slide" data-index="3">
+            <div class="slide-inner">
+                <span class="eyebrow">Alur Proses 02 &bull; Jalur Digital &amp; Yehan</span>
+                <h2>Flow Penanganan Kasus Digital &amp; Yehan (Masuk &rarr; Selesai)</h2>
+                <p class="subtitle">
+                    Alur penanganan terstruktur untuk tiket <strong>Shell Indonesia PT</strong> dan permintaan <strong>Yehan</strong> melalui 4 fase utama dengan jalur eskalasi teknis.
+                </p>
+
+                <div class="flow-track-4">
+                    <div class="step-card blue-theme">
+                        <div class="step-num">01</div>
+                        <div class="step-title">Intake via Email</div>
+                        <div class="step-desc">Permintaan atau laporan kendala dari jalur Digital &amp; Yehan diterima masuk ke sistem melalui kanal email dan tercatat sebagai tiket resmi.</div>
+                    </div>
+
+                    <div class="step-card blue-theme">
+                        <div class="step-num">02</div>
+                        <div class="step-title">Validasi &amp; Konfirmasi</div>
+                        <div class="step-desc">CS memvalidasi kelengkapan data, mereproduksi kendala, menentukan level case, dan mengonfirmasi estimasi penanganan kepada pelapor.</div>
+                    </div>
+
+                    <div class="step-card blue-theme">
+                        <div class="step-num">03</div>
+                        <div class="step-title">Eksekusi L1 / Eskalasi IT &amp; Backend</div>
+                        <div class="step-desc">Kasus standar diselesaikan CS (L1). Jika ditemukan <em>bug</em> sistem, tiket dieskalasi ke Tim Teknis/IT &amp; Backend untuk perbaikan.</div>
+                    </div>
+
+                    <div class="step-card blue-theme">
+                        <div class="step-num">04</div>
+                        <div class="step-title">Konfirmasi &amp; Closed</div>
+                        <div class="step-desc">Setelah solusi diverifikasi dan dikonfirmasi ke user/Yehan, CS menutup tiket dan notifikasi penyelesaian terkirim otomatis.</div>
+                    </div>
+                </div>
+
+                <div class="sub-process-grid">
+                    <div class="sub-box">
+                        <h4>&#9881;&#65039; Peran CS (Layer 1 &amp; Koordinasi)</h4>
+                        <p>Melakukan filter awal, pengecekan konfigurasi standar, serta menjadi jembatan komunikasi antara pihak Shell/Yehan dengan tim internal CPN dan IT selama investigasi berlangsung.</p>
+                    </div>
+                    <div class="sub-box">
+                        <h4>&#128187; Kapan Eskalasi ke Tim Teknis / IT &amp; Backend?</h4>
+                        <p>Dilakukan ketika hasil validasi membuktikan adanya anomali/<em>bug</em> pada sistem digital yang sedang berjalan sehingga membutuhkan perbaikan skrip, database, atau aplikasi di sisi backend.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: Proses Monitoring -->
+        <section class="slide" data-index="4">
+            <div class="slide-inner">
+                <span class="eyebrow">Alur Proses 03 &bull; Kontrol &amp; Transparansi</span>
+                <h2>Mekanisme Proses Monitoring Tiket</h2>
+                <p class="subtitle">
+                    Pemantauan progres tiket dilakukan secara dua arah melalui pembaruan <strong>status case</strong> yang di-assign oleh CS sejak awal menerima tiket sebagai <em>helper</em>.
+                </p>
+
+                <div class="monitoring-layout">
+                    <!-- Monitoring by User -->
+                    <div class="mon-card">
+                        <div class="mon-header">
+                            <div class="mon-icon user">&#128100;</div>
+                            <div>
+                                <h3 style="font-size: 1.15rem;">Monitoring oleh User (Customer)</h3>
+                                <span style="font-size: 0.82rem; color: var(--text-muted);">Transparansi progres mandiri via Portal &amp; Email</span>
+                            </div>
+                        </div>
+
+                        <div class="channel-pill-row">
+                            <div class="channel-box">
+                                <strong>&#127760; Via Portal Ticketing</strong>
+                                <span>User yang mengirim tiket melalui portal dapat langsung memantau perubahan status case secara <em>real-time</em> di dashboard portal.</span>
+                            </div>
+                            <div class="channel-box">
+                                <strong>&#9993;&#65039; Via Email Otomatis</strong>
+                                <span>User yang melapor via email dapat melacak progres dari balasan email terakhir yang memuat nomor tiket otomatis dari sistem.</span>
+                            </div>
+                        </div>
+
+                        <div class="sla-alert">
+                            <div style="font-size: 1.25rem;">&#9200;</div>
+                            <div>
+                                <strong>Aturan Auto-Close (2 x 24 Jam)</strong>
+                                <p>Jika dalam <strong>2x24 jam</strong> sejak email terakhir CS tidak ada respons dari user, sistem otomatis mengirim email pengingat sebelum tiket ditutup otomatis oleh sistem.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monitoring by CS -->
+                    <div class="mon-card">
+                        <div class="mon-header">
+                            <div class="mon-icon cs">&#128736;&#65039;</div>
+                            <div>
+                                <h3 style="font-size: 1.15rem;">Monitoring oleh Tim CS</h3>
+                                <span style="font-size: 0.82rem; color: var(--text-muted);">Kontrol antrean &amp; status terpusat di Zoho Ticketing</span>
+                            </div>
+                        </div>
+
+                        <ul class="detail-list" style="margin-top: 4px;">
+                            <li>
+                                <span class="bullet-icon" style="color: var(--accent-purple);">&#9679;</span>
+                                <div><strong>Assignment Status oleh Helper:</strong> Setiap agen CS yang ter-assign sebagai <em>helper</em> wajib memperbarui status case sesuai tahap pengerjaan terkini.</div>
+                            </li>
+                            <li>
+                                <span class="bullet-icon" style="color: var(--accent-purple);">&#9679;</span>
+                                <div><strong>Dashboard Zoho Ticketing:</strong> Seluruh tiket terpantau pada satu sistem Zoho Ticketing sehingga status tiap kasus (Open, On Progress, Escalated, Pending User, Closed) terlihat jelas.</div>
+                            </li>
+                            <li>
+                                <span class="bullet-icon" style="color: var(--accent-purple);">&#9679;</span>
+                                <div><strong>Tracking Eskalasi Lintas Tim:</strong> Memudahkan CS memantau tiket yang sedang ditangani oleh tim internal CPN maupun Tim Teknis/IT agar tetap sesuai durasi SLA yang diinformasikan ke customer.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: Ringkasan Perbandingan End-to-End -->
+        <section class="slide" data-index="5">
+            <div class="slide-inner">
+                <span class="eyebrow">Ringkasan Keseluruhan Proses</span>
+                <h2>Matriks Perbandingan Penanganan &amp; Monitoring Shell</h2>
+                <p class="subtitle">
+                    Rangkuman komprehensif alur kerja untuk memastikan pemahaman menyeluruh atas seluruh kasus dan permintaan Shell.
+                </p>
+
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Aspek Proses</th>
+                            <th>Jalur Non-Digital</th>
+                            <th>Jalur Digital &amp; Yehan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Identitas Data Tiket</td>
+                            <td><strong>Distributor SHELL Indonesia</strong></td>
+                            <td><strong>Shell Indonesia PT</strong> (termasuk request Yehan)</td>
+                        </tr>
+                        <tr>
+                            <td>Sumber Masalah Utama</td>
+                            <td>Operasional sistem berjalan &amp; kendala umum pengguna (<em>user error</em>).</td>
+                            <td>Kendala layanan digital &amp; temuan <em>bug</em> pada sistem yang berjalan.</td>
+                        </tr>
+                        <tr>
+                            <td>Alur Penanganan</td>
+                            <td>Masuk &rarr; Auto-assign CS (longest available) &rarr; Penentuan level &amp; info durasi &rarr; Cek CS/CPN &rarr; Close &amp; auto-notif.</td>
+                            <td>1. Intake via Email &rarr; 2. Validasi &amp; Konfirmasi &rarr; 3. Eksekusi L1 / Eskalasi IT &amp; Backend &rarr; 4. Konfirmasi &amp; Closed.</td>
+                        </tr>
+                        <tr>
+                            <td>Tim Eksekutor</td>
+                            <td>Utamanya <strong>Tim CS</strong> (dibantu internal CPN jika perlu).</td>
+                            <td><strong>Tim CS (L1)</strong> &amp; eskalasi ke <strong>Tim Teknis / IT &amp; Backend</strong> untuk perbaikan bug.</td>
+                        </tr>
+                        <tr>
+                            <td>Monitoring &amp; Auto-Close</td>
+                            <td colspan="2">
+                                <strong>CS:</strong> Update status oleh <em>helper</em> &amp; pemantauan terpusat di <strong>Zoho Ticketing</strong>.<br>
+                                <strong>User:</strong> Cek status via <strong>Portal</strong> atau balasan <strong>Email otomatis</strong> (notifikasi peringatan &amp; auto-close jika tanpa respons <strong>2x24 jam</strong>).
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <footer class="controls-bar">
+        <div class="key-hint">Gunakan tombol panah <strong>&larr; / &rarr;</strong> atau klik tombol navigasi</div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)" disabled>&larr; Sebelumnya</button>
+            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Selanjutnya &rarr;</button>
+        </div>
+    </footer>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const counterEl = document.getElementById('slideCounter');
+        const progressEl = document.getElementById('progressBar');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            counterEl.textContent = `Slide ${currentSlide + 1} dari ${totalSlides}`;
+            progressEl.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            const nextIndex = currentSlide + direction;
+            if (nextIndex >= 0 && nextIndex < totalSlides) {
+                currentSlide = nextIndex;
+                updateSlides();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            }
+        });
+    </script>
+</body>
+</html>
